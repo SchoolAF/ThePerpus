@@ -68,7 +68,7 @@ public class ThePerpus {
                     break;
                 case 3:
                     showData();
-  0                  updateBuku();
+                    updateBuku();
                     break;
                 case 4:
                     deleteBuku();
