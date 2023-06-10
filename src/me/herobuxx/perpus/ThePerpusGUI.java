@@ -1,6 +1,7 @@
 package me.herobuxx.perpus;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,7 +19,8 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
     private ResultSet rs;
 
     private JButton insertButton, showButton, editButton, deleteButton;
-    private JTextArea outputTextArea;
+    private JTable bookTable;
+    private DefaultTableModel tableModel;
 
     public ThePerpusGUI() {
         setTitle("Perpus Application");
@@ -30,7 +32,6 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
         showButton = new JButton("Show Data");
         editButton = new JButton("Edit Data");
         deleteButton = new JButton("Delete Data");
-        outputTextArea = new JTextArea();
 
         insertButton.addActionListener(this);
         showButton.addActionListener(this);
@@ -44,13 +45,13 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
 
-        JPanel outputPanel = new JPanel();
-        outputPanel.setLayout(new BorderLayout());
-        outputPanel.add(new JScrollPane(outputTextArea), BorderLayout.CENTER);
+        tableModel = new DefaultTableModel();
+        bookTable = new JTable(tableModel);
+        JScrollPane tableScrollPane = new JScrollPane(bookTable);
 
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(buttonPanel, BorderLayout.NORTH);
-        getContentPane().add(outputPanel, BorderLayout.CENTER);
+        getContentPane().add(tableScrollPane, BorderLayout.CENTER);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -67,16 +68,22 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
     }
 
     private void showData() {
-        outputTextArea.setText("");
+        tableModel.setRowCount(0);
+        tableModel.setColumnCount(0);
         String sql = "SELECT * FROM buku";
         try {
             rs = stmt.executeQuery(sql);
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                tableModel.addColumn(metaData.getColumnName(i));
+            }
             while (rs.next()) {
-                int idBuku = rs.getInt("id_buku");
-                String judul = rs.getString("judul");
-                String pengarang = rs.getString("pengarang");
-
-                outputTextArea.append(String.format("%d. %s -- (%s)\n", idBuku, judul, pengarang));
+                Object[] row = new Object[columnCount];
+                for (int i = 1; i <= columnCount; i++) {
+                    row[i - 1] = rs.getObject(i);
+                }
+                tableModel.addRow(row);
             }
         } catch (Exception e) {
             e.printStackTrace();
