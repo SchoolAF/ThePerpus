@@ -5,6 +5,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.sql.*;
 
 public class ThePerpusGUI extends JFrame implements ActionListener {
@@ -18,30 +20,32 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
     private Statement stmt;
     private ResultSet rs;
 
-    private JButton insertButton, showButton, editButton, deleteButton;
+    private Label appTitle;
+    private JButton insertButton, editButton, deleteButton;
     private JTable bookTable;
     private DefaultTableModel tableModel;
 
     public ThePerpusGUI() {
-        setTitle("Perpus Application");
+        setTitle("ThePerpus");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(800, 600);
         setLocationRelativeTo(null);
 
-        insertButton = new JButton("Insert Data");
-        showButton = new JButton("Show Data");
-        editButton = new JButton("Edit Data");
-        deleteButton = new JButton("Delete Data");
+        ImageIcon addIcon = new ImageIcon("res/icons/add.png"); // Replace with your icon file path
+        ImageIcon editIcon = new ImageIcon("res/icons/edit.png"); // Replace with your icon file path
+        ImageIcon deleteIcon = new ImageIcon("res/icons/delete.png"); // Replace with your icon file path
+
+        insertButton = new JButton(addIcon);
+        editButton = new JButton(editIcon);
+        deleteButton = new JButton(deleteIcon);
 
         insertButton.addActionListener(this);
-        showButton.addActionListener(this);
         editButton.addActionListener(this);
         deleteButton.addActionListener(this);
 
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(1, 4));
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 10, 10)); // Set alignment to right for buttons
         buttonPanel.add(insertButton);
-        buttonPanel.add(showButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
 
@@ -52,15 +56,24 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(buttonPanel, BorderLayout.NORTH);
         getContentPane().add(tableScrollPane, BorderLayout.CENTER);
+
+        addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                int width = getContentPane().getWidth();
+                int height = getContentPane().getHeight();
+                tableScrollPane.setPreferredSize(new Dimension(width, height - buttonPanel.getHeight()));
+                revalidate();
+            }
+        });
+
+        connectToDatabase();
+        showData(); // Show the table by default
     }
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == insertButton) {
             insertBuku();
-        } else if (e.getSource() == showButton) {
-            showData();
         } else if (e.getSource() == editButton) {
-            showData();
             updateBuku();
         } else if (e.getSource() == deleteButton) {
             deleteBuku();
@@ -101,6 +114,7 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
             statement.setString(2, pengarang);
             statement.executeUpdate();
             statement.close();
+            showData(); // Refresh table after insertion
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,6 +133,7 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
             statement.setInt(3, idBuku);
             statement.executeUpdate();
             statement.close();
+            showData(); // Refresh table after update
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,6 +148,7 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
             statement.executeUpdate();
             statement.close();
             JOptionPane.showMessageDialog(this, "Data telah terhapus...");
+            showData(); // Refresh table after deletion
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -161,7 +177,6 @@ public class ThePerpusGUI extends JFrame implements ActionListener {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 ThePerpusGUI perpusGUI = new ThePerpusGUI();
-                perpusGUI.connectToDatabase();
                 perpusGUI.setVisible(true);
             }
         });
